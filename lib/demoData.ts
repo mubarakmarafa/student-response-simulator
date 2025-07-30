@@ -15,78 +15,63 @@ export const demoStudentResponses: { [key: string]: StudentResponse[] } = {
   "What is photosynthesis and why is it important for life on Earth?": [
     {
       id: 1,
-      content: "Photosynthesis is the process where plants use sunlight, water, and carbon dioxide to make their own food (glucose) and release oxygen as a byproduct. This is crucial for life because it provides oxygen for animals to breathe and forms the base of food chains. Plants convert light energy into chemical energy, which sustains most ecosystems on Earth.",
-      quality: 'strong'
+      content: "Photosynthesis is the process where plants use sunlight, water, and carbon dioxide to make their own food (glucose) and release oxygen as a byproduct. This is crucial for life because it provides oxygen for animals to breathe and forms the base of food chains. Plants convert light energy into chemical energy, which sustains most ecosystems on Earth."
     },
     {
       id: 2,
-      content: "Photosynthesis is when plants make food using sunlight. They take in CO2 and water and make sugar and oxygen. It's important because animals need the oxygen to breathe and we eat plants for energy.",
-      quality: 'average'
+      content: "Photosynthesis is when plants make food using sunlight. They take in CO2 and water and make sugar and oxygen. It's important because animals need the oxygen to breathe and we eat plants for energy."
     },
     {
       id: 3,
-      content: "Plants do photosynthesis to make food from the sun. They breathe in oxygen and breathe out carbon dioxide, kind of like the opposite of humans. It's important because plants give us food.",
-      quality: 'weak'
+      content: "Plants do photosynthesis to make food from the sun. They breathe in oxygen and breathe out carbon dioxide, kind of like the opposite of humans. It's important because plants give us food."
     },
     {
       id: 4,
-      content: "Photosynthesis occurs in chloroplasts using chlorophyll to capture light energy. The process involves light-dependent and light-independent reactions, ultimately converting CO2 and H2O into glucose while releasing O2. This process is fundamental to life as it produces virtually all atmospheric oxygen and forms the foundation of food webs through primary production.",
-      quality: 'strong'
+      content: "Photosynthesis occurs in chloroplasts using chlorophyll to capture light energy. The process involves light-dependent and light-independent reactions, ultimately converting CO2 and H2O into glucose while releasing O2. This process is fundamental to life as it produces virtually all atmospheric oxygen and forms the foundation of food webs through primary production."
     },
     {
       id: 5,
-      content: "Plants use photosynthesis to get energy from sunlight. They need water and carbon dioxide too. The oxygen they make is good for us to breathe. Without plants doing this, we wouldn't have enough oxygen.",
-      quality: 'average'
+      content: "Plants use photosynthesis to get energy from sunlight. They need water and carbon dioxide too. The oxygen they make is good for us to breathe. Without plants doing this, we wouldn't have enough oxygen."
     },
     {
       id: 6,
-      content: "I think photosynthesis is how plants eat sunlight? Like they absorb it through their leaves and then they can grow. It's important because plants make oxygen and we need oxygen to live. Without plants we would all die.",
-      quality: 'weak'
+      content: "I think photosynthesis is how plants eat sunlight? Like they absorb it through their leaves and then they can grow. It's important because plants make oxygen and we need oxygen to live. Without plants we would all die."
     },
     {
       id: 7,
-      content: "Photosynthesis is a biochemical process that occurs in the chloroplasts of plant cells, where chlorophyll captures photons and converts them into chemical energy. This process not only produces glucose for plant metabolism but also releases oxygen as a waste product, which has fundamentally shaped Earth's atmosphere and enabled aerobic life to evolve.",
-      quality: 'strong'
+      content: "Photosynthesis is a biochemical process that occurs in the chloroplasts of plant cells, where chlorophyll captures photons and converts them into chemical energy. This process not only produces glucose for plant metabolism but also releases oxygen as a waste product, which has fundamentally shaped Earth's atmosphere and enabled aerobic life to evolve."
     },
     {
       id: 8,
-      content: "Plants do photosynthesis to make their food. They use sun, water, and air to do this. The oxygen they make helps animals breathe. It's really important for all living things.",
-      quality: 'average'
+      content: "Plants do photosynthesis to make their food. They use sun, water, and air to do this. The oxygen they make helps animals breathe. It's really important for all living things."
     },
     {
       id: 9,
-      content: "Photosynthesis is when plants turn sunlight into sugar. I think it happens in the green parts of plants. Plants are important because they clean the air and give us oxygen to breathe.",
-      quality: 'average'
+      content: "Photosynthesis is when plants turn sunlight into sugar. I think it happens in the green parts of plants. Plants are important because they clean the air and give us oxygen to breathe."
     },
     {
       id: 10,
-      content: "Plants eat sunlight and water and make oxygen. That's photosynthesis. It's important because animals need oxygen and plants need to eat too. I don't really know much more about it.",
-      quality: 'weak'
+      content: "Plants eat sunlight and water and make oxygen. That's photosynthesis. It's important because animals need oxygen and plants need to eat too. I don't really know much more about it."
     },
     {
       id: 11,
-      content: "Photosynthesis is the fundamental process by which autotrophic organisms convert inorganic compounds into organic matter using light energy. This process involves two main stages: the light reactions and the Calvin cycle, resulting in the production of glucose and the release of oxygen, which is essential for maintaining atmospheric balance.",
-      quality: 'strong'
+      content: "Photosynthesis is the fundamental process by which autotrophic organisms convert inorganic compounds into organic matter using light energy. This process involves two main stages: the light reactions and the Calvin cycle, resulting in the production of glucose and the release of oxygen, which is essential for maintaining atmospheric balance."
     },
     {
       id: 12,
-      content: "Plants need sunlight to make their own food through photosynthesis. They also need carbon dioxide and water. When they do this, they release oxygen which is what we breathe. So photosynthesis is really important for keeping us alive.",
-      quality: 'average'
+      content: "Plants need sunlight to make their own food through photosynthesis. They also need carbon dioxide and water. When they do this, they release oxygen which is what we breathe. So photosynthesis is really important for keeping us alive."
     },
     {
       id: 13,
-      content: "I'm not really sure how photosynthesis works but I know plants need sunlight. Maybe they absorb it somehow? It's important because plants give us food and oxygen I think.",
-      quality: 'weak'
+      content: "I'm not really sure how photosynthesis works but I know plants need sunlight. Maybe they absorb it somehow? It's important because plants give us food and oxygen I think."
     },
     {
       id: 14,
-      content: "Photosynthesis allows plants to synthesize organic compounds from carbon dioxide and water using light energy, typically from the sun. This process occurs primarily in the leaves and involves chlorophyll molecules that absorb light. The oxygen produced is essential for respiration in most living organisms.",
-      quality: 'strong'
+      content: "Photosynthesis allows plants to synthesize organic compounds from carbon dioxide and water using light energy, typically from the sun. This process occurs primarily in the leaves and involves chlorophyll molecules that absorb light. The oxygen produced is essential for respiration in most living organisms."
     },
     {
       id: 15,
-      content: "Photosynthesis is how plants make food from sunlight. They take in carbon dioxide from the air and water from their roots. The energy from sunlight helps them combine these to make sugar for food. As a bonus, they release oxygen that animals need to breathe.",
-      quality: 'average'
+      content: "Photosynthesis is how plants make food from sunlight. They take in carbon dioxide from the air and water from their roots. The energy from sunlight helps them combine these to make sugar for food. As a bonus, they release oxygen that animals need to breathe."
     }
   ]
 };

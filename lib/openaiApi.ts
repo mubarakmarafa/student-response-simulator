@@ -90,11 +90,10 @@ Make sure each answer feels authentic to how real students would respond, with n
     // Parse the response to extract individual answers
     const answers = parseStudentAnswers(response, count);
     
-    // Assign quality levels based on content analysis
+    // Return without quality assessment
     return answers.map((content, index) => ({
       id: index + 1,
-      content: content.trim(),
-      quality: assessAnswerQuality(content, question)
+      content: content.trim()
     }));
 
   } catch (error) {
@@ -114,47 +113,87 @@ export async function generateAnalysisResponse(
     `Student ${r.id}: ${r.content}`
   ).join('\n\n');
 
-  const userPrompt = `You are an education expert. A teacher asked students the following question:
-
-"${originalQuestion}"
+  const userPrompt = `You are an expert education analyst. A teacher asked students: "${originalQuestion}"
 
 The students responded with:
-
 ${studentAnswersList}
 
-Now answer this follow-up question:  
-"${analysisQuestion}"
+The teacher now asks: "${analysisQuestion}"
 
-IMPORTANT: If your analysis involves individual student feedback, you MUST provide feedback for ALL ${responses.length} students (Student 1 through Student ${responses.length}). Do not skip any students.
+RESPONSE FORMAT INSTRUCTIONS:
+You can return your analysis in different formats depending on what would be most helpful. Choose the best format:
 
-FORMATTING INSTRUCTIONS:
-- Use clear, structured formatting to make your response easy to read
-- For individual student feedback, use exactly this format: "**Student X**:" followed by the feedback
-- For numbered points, use "1." "2." etc. at the start of lines
-- For bullet points, use "-" at the start of lines  
-- Use **bold text** for emphasis on key terms or concepts
-- Use *italic text* for secondary emphasis
-- Separate different sections with blank lines
-- If providing an overall analysis, you may start with "Analysis:" as a section header
-- Keep paragraphs focused and well-spaced for readability
+1. **TEXT_RESPONSE**: For general analysis, insights, or explanations
+2. **STUDENT_BREAKDOWN**: For individual student feedback (use exactly this format: "**Student X**: feedback")
+3. **CHART_DATA**: For data that would benefit from visualization
+4. **DASHBOARD**: For comprehensive analysis with multiple components
 
-Structure your response logically and use the formatting above to enhance clarity.`;
+If returning CHART_DATA, structure it like this:
+\`\`\`json
+{
+  "type": "CHART_DATA",
+  "chartType": "bar|pie|line|comparison",
+  "title": "Chart Title",
+  "data": [
+    {"label": "Category", "value": 10, "description": "Optional description"},
+    {"label": "Another", "value": 15, "description": "Optional description"}
+  ],
+  "insights": "Key insights about the data"
+}
+\`\`\`
+
+If returning DASHBOARD, structure it like this:
+\`\`\`json
+{
+  "type": "DASHBOARD",
+  "title": "Analysis Dashboard",
+  "components": [
+    {
+      "type": "summary",
+      "title": "Overview",
+      "content": "Summary text"
+    },
+    {
+      "type": "chart",
+      "chartType": "bar|pie|line",
+      "title": "Chart Title",
+      "data": [{"label": "Item", "value": 5}]
+    },
+    {
+      "type": "insights",
+      "title": "Key Insights",
+      "items": ["Insight 1", "Insight 2"]
+    },
+    {
+      "type": "recommendations",
+      "title": "Teaching Recommendations",
+      "items": ["Recommendation 1", "Recommendation 2"]
+    }
+  ]
+}
+\`\`\`
+
+IMPORTANT: 
+- Always provide feedback for ALL ${responses.length} students when doing individual analysis
+- Use clear, educational language
+- Focus on actionable insights for teachers
+- Choose the format that best serves the specific question asked
+
+Your response:`;
 
   try {
     const messages: OpenAIMessage[] = [
       { 
         role: 'system', 
-        content: 'You are an educational expert who provides clear, well-structured analysis. Always format your responses for maximum readability using markdown-style formatting. When giving individual student feedback, use "**Student X**:" format. Use numbered lists (1., 2., 3.) for sequential points and bullet points (-) for lists. Use **bold** for key terms and *italics* for emphasis. Separate sections with blank lines and use clear section headers when appropriate.' 
+        content: 'You are an expert educational analyst who provides clear, actionable insights. You can return responses in different formats: plain text, structured student feedback, chart data, or dashboard components. Choose the format that best answers the specific question. When providing individual feedback, always cover all students. Use educational terminology and focus on practical teaching applications.' 
       },
       { role: 'user', content: userPrompt }
     ];
 
-    const response = await callOpenAI(messages, apiKey, 600);
+    const response = await callOpenAI(messages, apiKey, 800);
     
-    // Debug logging to understand what the AI is returning
     console.log('=== ANALYSIS DEBUG ===');
     console.log('Total students sent to AI:', responses.length);
-    console.log('Student IDs sent:', responses.map(r => r.id));
     console.log('Raw AI response:', response);
     console.log('=== END DEBUG ===');
 
@@ -172,68 +211,81 @@ Structure your response logically and use the formatting above to enhance clarit
 function parseStudentAnswers(response: string, expectedCount: number): string[] {
   const answers: string[] = [];
   
-  // Try to match numbered list format first
-  const numberedMatches = response.match(/^\d+\.\s*(.+)$/gm);
+  // Debug logging
+  console.log('=== PARSING DEBUG ===');
+  console.log('Raw AI response:', response);
+  
+  // Try multiple parsing strategies
+  
+  // Strategy 1: Match numbered list format (1. 2. 3. etc.)
+  const numberedPattern = /^(\d+)\.?\s*(.+)$/gm;
+  const numberedMatches = [...response.matchAll(numberedPattern)];
   
   if (numberedMatches && numberedMatches.length > 0) {
-    // Extract content after the number and period
+    console.log('Found numbered matches:', numberedMatches.length);
     numberedMatches.forEach(match => {
-      const content = match.replace(/^\d+\.\s*/, '').trim();
-      if (content) {
+      const content = match[2]?.trim();
+      if (content && content.length > 0) {
         answers.push(content);
       }
     });
-  } else {
-    // Fallback: split by line breaks and filter out empty lines
+  }
+  
+  // Strategy 2: If numbered parsing didn't work well, try line-by-line approach
+  if (answers.length < expectedCount) {
+    console.log('Trying line-by-line parsing...');
     const lines = response.split('\n')
       .map(line => line.trim())
-      .filter(line => line.length > 0 && !line.match(/^\d+\.\s*$/));
+      .filter(line => {
+        // Filter out empty lines and lines that are just numbers
+        return line.length > 0 && 
+               !line.match(/^\d+\.?\s*$/) && 
+               !line.match(/^Here are.*/i) &&
+               !line.match(/^Student responses?:?/i);
+      });
     
-    answers.push(...lines);
+    // Clear previous attempts and use line approach
+    answers.length = 0;
+    
+    lines.forEach(line => {
+      // Remove leading numbers and periods if present
+      const cleanLine = line.replace(/^\d+\.?\s*/, '').trim();
+      if (cleanLine.length > 10) { // Minimum length for a meaningful response
+        answers.push(cleanLine);
+      }
+    });
   }
+  
+  // Strategy 3: Split by double newlines and process blocks
+  if (answers.length < expectedCount) {
+    console.log('Trying paragraph-based parsing...');
+    const paragraphs = response.split(/\n\s*\n/)
+      .map(p => p.trim())
+      .filter(p => p.length > 10);
+    
+    answers.length = 0;
+    paragraphs.forEach(paragraph => {
+      const cleanParagraph = paragraph.replace(/^\d+\.?\s*/, '').trim();
+      if (cleanParagraph.length > 10) {
+        answers.push(cleanParagraph);
+      }
+    });
+  }
+  
+  console.log('Parsed answers:', answers.length);
+  console.log('Expected count:', expectedCount);
+  console.log('=== END PARSING DEBUG ===');
   
   // Ensure we have the expected number of answers
   while (answers.length < expectedCount) {
-    answers.push(`Student response ${answers.length + 1}: [Unable to parse from AI response]`);
+    answers.push(`I'm not sure about this question. Could you provide more guidance?`);
   }
   
   // Trim to expected count if we got too many
   return answers.slice(0, expectedCount);
 }
 
-// Assess the quality of a student answer based on content analysis
-function assessAnswerQuality(answer: string, question: string): 'strong' | 'average' | 'weak' {
-  const answerLower = answer.toLowerCase();
-  const questionLower = question.toLowerCase();
-  
-  // Simple heuristics for quality assessment
-  let score = 0;
-  
-  // Length and detail (longer answers often show more thought)
-  if (answer.length > 100) score += 2;
-  else if (answer.length > 50) score += 1;
-  
-  // Use of proper terminology and concepts
-  if (answerLower.includes('because') || answerLower.includes('therefore') || answerLower.includes('however')) score += 1;
-  if (answerLower.includes('for example') || answerLower.includes('such as')) score += 1;
-  
-  // Signs of deeper thinking
-  if (answerLower.includes('first') && answerLower.includes('second')) score += 1;
-  if (answerLower.includes('in conclusion') || answerLower.includes('overall')) score += 1;
-  
-  // Presence of questioning or uncertainty (often indicates weaker understanding)
-  if (answerLower.includes('i think maybe') || answerLower.includes('not sure') || answerLower.includes('i guess')) score -= 1;
-  if (answerLower.includes('idk') || answerLower.includes("don't know")) score -= 2;
-  
-  // Very short or dismissive answers
-  if (answer.length < 20) score -= 2;
-  if (answerLower.includes('boring') || answerLower.includes('stupid') || answerLower.includes('dumb')) score -= 1;
-  
-  // Classify based on score
-  if (score >= 3) return 'strong';
-  if (score <= 0) return 'weak';
-  return 'average';
-}
+// Remove the assessAnswerQuality function since we're not using quality ratings anymore
 
 // Utility function to validate API key format
 export function isValidApiKeyFormat(apiKey: string): boolean {

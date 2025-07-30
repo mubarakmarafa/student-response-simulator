@@ -1,7 +1,6 @@
 export interface StudentResponse {
   id: number;
   content: string;
-  quality: 'strong' | 'average' | 'weak';
 }
 
 export interface Question {
