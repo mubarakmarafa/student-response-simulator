@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import QuestionInput from '@/components/QuestionInput';
 import StudentResponsesList from '@/components/StudentResponsesList';
 import AnalysisPanel from '@/components/AnalysisPanel';
 import ApiKeyInput from '@/components/ApiKeyInput';
+import SubmitPromptButton from '@/components/SubmitPromptButton';
 import { Question, StudentResponse, Analysis } from '@/lib/types';
 import { generateMockStudentResponses, generateMockAnalysis } from '@/lib/mockData';
 import { 
@@ -16,13 +18,18 @@ import {
   isValidApiKeyFormat 
 } from '@/lib/openaiApi';
 import { getDemoResponsesForQuestion } from '@/lib/demoData';
+import { getPromptById } from '@/lib/supabase';
+import { Grid3x3, ArrowRight, RefreshCw } from 'lucide-react';
 
 export default function Home() {
   const [currentQuestion, setCurrentQuestion] = useState<string>('');
   const [studentResponses, setStudentResponses] = useState<StudentResponse[]>([]);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRemixing, setIsRemixing] = useState(false);
+  const [isRemixedContent, setIsRemixedContent] = useState(false);
 
   // Load API key from sessionStorage on component mount
   useEffect(() => {
@@ -31,6 +38,50 @@ export default function Home() {
       setApiKey(storedKey);
     }
   }, []);
+
+  // Check for remix parameter and load prompt data
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const remixId = urlParams.get('remix');
+    
+    if (remixId) {
+      loadRemixData(remixId);
+    }
+  }, []);
+
+  const loadRemixData = async (promptId: string) => {
+    setIsRemixing(true);
+    setError(null);
+    
+    try {
+      const promptData = await getPromptById(promptId);
+      
+      if (promptData) {
+        // Load the prompt data into state
+        setCurrentQuestion(promptData.question);
+        setStudentResponses(promptData.student_responses);
+        setIsRemixedContent(true);
+        
+        // If there was an analysis, load that too
+        if (promptData.analysis_question && promptData.analysis_result) {
+          setAnalysis({
+            question: promptData.analysis_question,
+            response: promptData.analysis_result
+          });
+        }
+        
+        // Clear the URL parameter
+        window.history.replaceState({}, '', '/');
+      } else {
+        setError('Could not load the selected prompt. It may have been deleted.');
+      }
+    } catch (error) {
+      console.error('Error loading remix data:', error);
+      setError('Failed to load prompt data for remixing.');
+    } finally {
+      setIsRemixing(false);
+    }
+  };
 
   const handleApiKeySubmit = (newApiKey: string) => {
     if (!isValidApiKeyFormat(newApiKey)) {
@@ -53,6 +104,9 @@ export default function Home() {
     setIsLoading(true);
     setCurrentQuestion(question.text);
     setError(null);
+    // Clear previous analysis and remix state when new question is submitted
+    setAnalysis(null);
+    setIsRemixedContent(false);
     
     try {
       let responses: StudentResponse[];
@@ -102,17 +156,23 @@ export default function Home() {
   };
 
   const handleAnalysis = async (analysisQuestion: string): Promise<Analysis> => {
+    let result: Analysis;
+    
     if (apiKey) {
       try {
-        return await generateAnalysisResponse(currentQuestion, studentResponses, analysisQuestion, apiKey);
+        result = await generateAnalysisResponse(currentQuestion, studentResponses, analysisQuestion, apiKey);
       } catch (apiError) {
         console.error('OpenAI API error during analysis:', apiError);
         // Fall back to mock analysis
-        return await generateMockAnalysis(currentQuestion, studentResponses, analysisQuestion);
+        result = await generateMockAnalysis(currentQuestion, studentResponses, analysisQuestion);
       }
     } else {
-      return await generateMockAnalysis(currentQuestion, studentResponses, analysisQuestion);
+      result = await generateMockAnalysis(currentQuestion, studentResponses, analysisQuestion);
     }
+    
+    // Store the analysis result
+    setAnalysis(result);
+    return result;
   };
 
   return (
@@ -120,9 +180,23 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Student Response Simulator
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex-1">
+              Student Response Simulator
+            </h1>
+            <div className="flex-1 flex justify-end">
+              <Link 
+                href="/gallery"
+                className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <Grid3x3 className="w-4 h-4" />
+                <span>Prompt Gallery</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+          
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Generate realistic student responses to your questions and analyze them for patterns, 
             misconceptions, and learning opportunities.
@@ -152,6 +226,34 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Remix Loading State */}
+        {isRemixing && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Loading Remix</h3>
+                <p className="text-sm text-blue-700 mt-1">Loading prompt data for remixing...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remix Success Banner */}
+        {isRemixedContent && currentQuestion && studentResponses.length > 0 && !isLoading && !isRemixing && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <RefreshCw className="w-5 h-5 text-purple-600" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-purple-800">Remix Mode</h3>
+                <p className="text-sm text-purple-700 mt-1">
+                  You're working with a remixed prompt! Feel free to modify the question, add more responses, or try different analysis approaches.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -188,7 +290,11 @@ export default function Home() {
         />
 
         {/* Question Input */}
-        <QuestionInput onSubmit={handleQuestionSubmit} isLoading={isLoading} />
+        <QuestionInput 
+          onSubmit={handleQuestionSubmit} 
+          isLoading={isLoading} 
+          initialQuestion={currentQuestion}
+        />
 
         {/* Student Responses */}
         <StudentResponsesList 
@@ -196,11 +302,33 @@ export default function Home() {
           originalQuestion={currentQuestion}
         />
 
+        {/* Submit Button - Show after responses are generated */}
+        {studentResponses.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  Share with your team
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Submit this prompt and its results to the team gallery for others to see and learn from.
+                </p>
+              </div>
+              <SubmitPromptButton 
+                question={currentQuestion}
+                responses={studentResponses}
+                analysis={analysis}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Analysis Panel */}
         <AnalysisPanel 
           responses={studentResponses}
           originalQuestion={currentQuestion}
           onAnalyze={handleAnalysis}
+          initialAnalysisQuestion={analysis?.question || ''}
         />
 
         {/* Footer */}

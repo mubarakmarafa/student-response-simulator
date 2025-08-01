@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Analysis, StudentResponse } from '@/lib/types';
 import { analysisPrompts } from '@/lib/demoData';
 import SavedPromptsManager from './SavedPromptsManager';
@@ -11,6 +11,7 @@ interface AnalysisPanelProps {
   responses: StudentResponse[];
   originalQuestion: string;
   onAnalyze: (question: string) => Promise<Analysis>;
+  initialAnalysisQuestion?: string;
 }
 
 // Dynamic UI Component Renderer
@@ -328,10 +329,15 @@ function SmartResponseFormatter({ response }: { response: string }) {
   );
 }
 
-export default function AnalysisPanel({ responses, originalQuestion, onAnalyze }: AnalysisPanelProps) {
-  const [analysisQuestion, setAnalysisQuestion] = useState('');
+export default function AnalysisPanel({ responses, originalQuestion, onAnalyze, initialAnalysisQuestion = '' }: AnalysisPanelProps) {
+  const [analysisQuestion, setAnalysisQuestion] = useState(initialAnalysisQuestion);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update analysis question when initialAnalysisQuestion prop changes (for remix functionality)
+  useEffect(() => {
+    setAnalysisQuestion(initialAnalysisQuestion);
+  }, [initialAnalysisQuestion]);
 
   if (responses.length === 0) {
     return null;

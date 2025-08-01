@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Question } from '@/lib/types';
 import { demoQuestions, getRandomDemoQuestion } from '@/lib/demoData';
 
 interface QuestionInputProps {
   onSubmit: (question: Question) => void;
   isLoading: boolean;
+  initialQuestion?: string;
 }
 
-export default function QuestionInput({ onSubmit, isLoading }: QuestionInputProps) {
-  const [questionText, setQuestionText] = useState('');
+export default function QuestionInput({ onSubmit, isLoading, initialQuestion = '' }: QuestionInputProps) {
+  const [questionText, setQuestionText] = useState(initialQuestion);
   const [numberOfResponses, setNumberOfResponses] = useState(5);
+
+  // Update question text when initialQuestion prop changes (for remix functionality)
+  useEffect(() => {
+    setQuestionText(initialQuestion);
+  }, [initialQuestion]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
